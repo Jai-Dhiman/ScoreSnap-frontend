@@ -1,0 +1,50 @@
+body {
+  background-color: #121212;
+  color: #ffffff;
+}
+
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-control {
+  background-color: #333;
+  color: #fff;
+  border-color: #555;
+}
+
+.form-control:focus {
+  background-color: #444;
+  color: #fff;
+  border-color: #777;
+}
+
+.btn-primary {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+.btn-primary:hover {
+  background-color: #0b5ed7;
+  border-color: #0a58ca;
+}
+
+.btn-success {
+  background-color: #198754;
+  border-color: #198754;
+}
+
+.btn-success:hover {
+  background-color: #157347;
+  border-color: #146c43;
+}
+
+.alert-danger {
+  background-color: #842029;
+  color: #ea868f;
+  border-color: #842029;
+}
+
+/* Add any additional custom styles here */

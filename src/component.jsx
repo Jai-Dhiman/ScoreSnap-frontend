@@ -2,42 +2,92 @@ import { useState } from "react";
 import axios from "axios";
 
 const Component = () => {
-  const [image, setImage] = useState(null);
-  const [processedScore, setProcessedScore] = useState(null);
+  const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [mxlFile, setMxlFile] = useState(null);
+  const [error, setError] = useState(null);
 
-  const handleImageUpload = (event) => {
-    setImage(event.target.files[0]);
+  const handleFileChange = (event) => {
+    const selectedFile = event.target.files[0];
+    setFile(selectedFile);
+
+    // Create a preview of the image
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreview(reader.result);
+    };
+    reader.readAsDataURL(selectedFile);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setLoading(true);
+    setError(null);
+    setMxlFile(null);
+
     const formData = new FormData();
-    formData.append("image", image);
+    formData.append("image", file);
+
     try {
-      const response = await axios.post("http://localhost:3000/api/process_image", formData);
-      setProcessedScore(response.data);
-    } catch (error) {
-      console.error("Error processing image:", error);
+      const response = await axios.post("http://localhost:3000/api/process_image", formData, {
+        responseType: "blob",
+      });
+
+      const mxlBlob = new Blob([response.data], { type: "application/vnd.recordare.musicxml+xml" });
+      const mxlUrl = URL.createObjectURL(mxlBlob);
+      setMxlFile(mxlUrl);
+    } catch (err) {
+      console.error("Error processing image:", err);
+      setError(`An error occurred while processing the image: ${err.message}. Please try again.`);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="card">
-      <div className="card-body">
-        <h2 className="card-title mb-4">Add Score</h2>
+    <div className="container mt-5">
+      <h1 className="mb-4">ScoreSnap</h1>
+      <form onSubmit={handleSubmit}>
         <div className="mb-3">
-          <input type="file" className="form-control" onChange={handleImageUpload} accept="image/*" />
+          <label htmlFor="imageUpload" className="form-label">
+            Upload Score Image
+          </label>
+          <input type="file" className="form-control" id="imageUpload" onChange={handleFileChange} accept="image/*" />
         </div>
-        <button className="btn btn-primary" onClick={handleSubmit} disabled={!image}>
-          Process Image
-        </button>
-        {processedScore && (
-          <div className="mt-4">
-            <h3>Processed Score</h3>
-            {/* Display processed score here */}
-            <pre className="bg-light p-3 mt-2">{JSON.stringify(processedScore, null, 2)}</pre>
+        {preview && (
+          <div className="mb-3">
+            <img src={preview} alt="Preview" className="img-fluid mb-2" style={{ maxHeight: "300px" }} />
           </div>
         )}
-      </div>
+        <button type="submit" className="btn btn-primary" disabled={!file || loading}>
+          {loading ? "Processing..." : "Process Score"}
+        </button>
+      </form>
+      {loading && (
+        <div className="mt-3">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <span className="ms-2">Processing your score...</span>
+        </div>
+      )}
+
+      {error && (
+        <div className="alert alert-danger mt-3" role="alert">
+          {error}
+        </div>
+      )}
+
+      {mxlFile && (
+        <div className="mt-3">
+          <h3>Processed Score</h3>
+          <p>Your score has been successfully processed!</p>
+          <a href={mxlFile} download="processed_score.mxl" className="btn btn-success">
+            Download MusicXML File
+          </a>
+        </div>
+      )}
     </div>
   );
 };
